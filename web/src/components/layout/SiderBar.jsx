@@ -38,6 +38,7 @@ const routerMap = {
   topup: '/console/topup',
   user: '/console/user',
   subscription: '/console/subscription',
+  'subscription-batch': '/console/subscription/batch',
   log: '/console/log',
   midjourney: '/console/midjourney',
   setting: '/console/setting',
@@ -156,8 +157,20 @@ const SiderBar = ({ onNavigate = () => {} }) => {
       {
         text: t('订阅管理'),
         itemKey: 'subscription',
-        to: '/subscription',
         className: isAdmin() ? '' : 'tableHiddle',
+        icon: <div className='sidebar-icon-container flex-shrink-0'>{getLucideIcon('subscription', false)}</div>,
+        items: [
+          {
+            text: t('订阅管理'),
+            itemKey: 'subscription-manage',
+            to: '/subscription',
+          },
+          {
+            text: t('批量订阅'),
+            itemKey: 'subscription-batch',
+            to: '/subscription/batch',
+          },
+        ],
       },
       {
         text: t('模型管理'),
@@ -483,7 +496,7 @@ const SiderBar = ({ onNavigate = () => {} }) => {
                 {!collapsed && (
                   <div className='sidebar-group-label'>{t('管理员')}</div>
                 )}
-                {adminItems.map((item) => renderNavItem(item))}
+                {adminItems.map((item) => renderSubItem(item))}
               </div>
             </>
           )}
