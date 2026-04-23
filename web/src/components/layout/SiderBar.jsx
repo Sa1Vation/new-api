@@ -161,7 +161,7 @@ const SiderBar = ({ onNavigate = () => {} }) => {
         icon: <div className='sidebar-icon-container flex-shrink-0'>{getLucideIcon('subscription', false)}</div>,
         items: [
           {
-            text: t('订阅管理'),
+            text: t('套餐管理'),
             itemKey: 'subscription-manage',
             to: '/subscription',
           },
