@@ -220,9 +220,9 @@ const SubscriptionBatch = () => {
   };
 
   // Table columns
-  const columns = [
+  const columns = useMemo(() => [
     {
-      key: 'selection',
+      title: '',
       width: 50,
       render: (text, record, index) => {
         return (
@@ -236,22 +236,22 @@ const SubscriptionBatch = () => {
     },
     {
       title: 'ID',
-      dataKey: 'id',
+      dataIndex: 'id',
       width: 80,
     },
     {
       title: t('用户名'),
-      dataKey: 'username',
+      dataIndex: 'username',
       width: 120,
     },
     {
       title: t('用户组'),
-      dataKey: 'group',
+      dataIndex: 'group',
       width: 120,
     },
     {
       title: t('状态'),
-      dataKey: 'status',
+      dataIndex: 'status',
       width: 80,
       render: (status) => {
         return status === 1 ? (
@@ -261,11 +261,11 @@ const SubscriptionBatch = () => {
         );
       },
     },
-  ];
+  ], []);
 
   // Plan options for select
   const planOptions = plans.map((plan) => ({
-    label: plan.name || `Plan ${plan.id}`,
+    label: plan.title || `Plan ${plan.id}`,
     value: plan.id,
   }));
 
@@ -369,9 +369,9 @@ const SubscriptionBatch = () => {
 
                 <div className='text-sm text-gray-500 mb-4'>
                   {actionType === 'bind'
-                    ? t('将为以下用户添加订阅')
-                    : t('将从以下用户删除订阅')}
-                  : {selectedUserIds.length} {t('个用户')}
+                    ? t('将为以下用户添加订阅：')
+                    : t('将从以下用户删除订阅：')}
+                  {selectedUserIds.length} {t('个用户')}
                 </div>
 
                 <div className='flex gap-2'>
