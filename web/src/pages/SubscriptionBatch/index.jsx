@@ -57,7 +57,10 @@ const SubscriptionBatch = () => {
     try {
       const res = await API.get('/api/subscription/admin/plans?enabled=true');
       if (res.data?.success) {
-        setPlans(res.data.data || []);
+        // API returns [{plan: {...}}, ...], extract the plan objects
+        const planData = res.data.data || [];
+        const extractedPlans = planData.map((item) => item.plan);
+        setPlans(extractedPlans);
       } else {
         showError(res.data?.message || t('加载失败'));
       }
@@ -141,37 +144,10 @@ const SubscriptionBatch = () => {
     loadUsers(1, size);
   };
 
-  // Handle select all
-  const handleSelectAll = (checked) => {
-    if (checked) {
-      setSelectedUserIds(users.map((u) => u.id));
-    } else {
-      setSelectedUserIds([]);
-    }
+  // Handle row selection change
+  const handleRowSelectionChange = (selectedRowKeys) => {
+    setSelectedUserIds(selectedRowKeys);
   };
-
-  // Handle row selection
-  const handleRowSelection = (record) => {
-    const userId = record.id;
-    if (selectedUserIds.includes(userId)) {
-      setSelectedUserIds(selectedUserIds.filter((id) => id !== userId));
-    } else {
-      setSelectedUserIds([...selectedUserIds, userId]);
-    }
-  };
-
-  // Check if all current page users are selected
-  const isAllSelected = useMemo(() => {
-    if (users.length === 0) return false;
-    return users.every((u) => selectedUserIds.includes(u.id));
-  }, [users, selectedUserIds]);
-
-  // Check if some current page users are selected
-  const isSomeSelected = useMemo(() => {
-    if (users.length === 0) return false;
-    const selectedCount = users.filter((u) => selectedUserIds.includes(u.id)).length;
-    return selectedCount > 0 && selectedCount < users.length;
-  }, [users, selectedUserIds]);
 
   // Execute batch action
   const executeAction = async () => {
@@ -221,19 +197,6 @@ const SubscriptionBatch = () => {
 
   // Table columns
   const columns = useMemo(() => [
-    {
-      title: '',
-      width: 50,
-      render: (text, record, index) => {
-        return (
-          <input
-            type='checkbox'
-            checked={selectedUserIds.includes(record.id)}
-            onChange={() => handleRowSelection(record)}
-          />
-        );
-      },
-    },
     {
       title: 'ID',
       dataIndex: 'id',
@@ -294,6 +257,10 @@ const SubscriptionBatch = () => {
               dataSource={users}
               loading={usersLoading}
               rowKey='id'
+              rowSelection={{
+                selectedRowKeys: selectedUserIds,
+                onChange: handleRowSelectionChange,
+              }}
               pagination={{
                 currentPage: activePage,
                 pageSize: pageSize,
@@ -312,12 +279,6 @@ const SubscriptionBatch = () => {
 
             {selectedUserIds.length > 0 && (
               <div className='mt-4 flex items-center gap-4'>
-                <Button onClick={() => handleSelectAll(true)} size='small'>
-                  {t('全选当前页')}
-                </Button>
-                <Button onClick={() => handleSelectAll(false)} size='small'>
-                  {t('取消全选')}
-                </Button>
                 <Button onClick={clearSelection} size='small' type='warning'>
                   {t('清空选择')}
                 </Button>
