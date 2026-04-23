@@ -381,3 +381,104 @@ func AdminDeleteUserSubscription(c *gin.Context) {
 	}
 	common.ApiSuccess(c, nil)
 }
+
+// Batch operation request
+type BatchSubscriptionRequest struct {
+	UserIds []int `json:"user_ids"`
+	PlanId  int   `json:"plan_id"`
+}
+
+// Batch operation result
+type BatchSubscriptionResult struct {
+	Total        int             `json:"total"`
+	SuccessCount int             `json:"success_count"`
+	FailCount    int             `json:"fail_count"`
+	Fails        []BatchFailItem `json:"fails"`
+}
+
+type BatchFailItem struct {
+	UserId int    `json:"user_id"`
+	Reason string `json:"reason"`
+}
+
+// AdminBatchBindSubscription replaces existing subscription (if any) with the specified plan for each user.
+func AdminBatchBindSubscription(c *gin.Context) {
+	var req BatchSubscriptionRequest
+	if err := c.ShouldBindJSON(&req); err != nil || len(req.UserIds) == 0 || req.PlanId <= 0 {
+		common.ApiErrorMsg(c, "参数错误")
+		return
+	}
+
+	// Validate plan exists
+	_, err := model.GetSubscriptionPlanById(req.PlanId)
+	if err != nil {
+		common.ApiErrorMsg(c, "套餐不存在")
+		return
+	}
+
+	result := BatchSubscriptionResult{
+		Total:        len(req.UserIds),
+		SuccessCount: 0,
+		FailCount:    0,
+		Fails:        []BatchFailItem{},
+	}
+
+	for _, userId := range req.UserIds {
+		// Delete existing subscription for this user+plan (replace logic)
+		var existing model.UserSubscription
+		if err := model.DB.Where("user_id = ? AND plan_id = ?", userId, req.PlanId).First(&existing).Error; err == nil {
+			// Found existing subscription, delete it
+			_, delErr := model.AdminDeleteUserSubscription(existing.Id)
+			if delErr != nil {
+				result.Fails = append(result.Fails, BatchFailItem{UserId: userId, Reason: delErr.Error()})
+				result.FailCount++
+				continue
+			}
+		}
+
+		// Bind new subscription
+		_, bindErr := model.AdminBindSubscription(userId, req.PlanId, "")
+		if bindErr != nil {
+			result.Fails = append(result.Fails, BatchFailItem{UserId: userId, Reason: bindErr.Error()})
+			result.FailCount++
+			continue
+		}
+		result.SuccessCount++
+	}
+	common.ApiSuccess(c, result)
+}
+
+// AdminBatchUnbindSubscription deletes subscriptions matching userIds and planId.
+func AdminBatchUnbindSubscription(c *gin.Context) {
+	var req BatchSubscriptionRequest
+	if err := c.ShouldBindJSON(&req); err != nil || len(req.UserIds) == 0 || req.PlanId <= 0 {
+		common.ApiErrorMsg(c, "参数错误")
+		return
+	}
+
+	result := BatchSubscriptionResult{
+		Total:        len(req.UserIds),
+		SuccessCount: 0,
+		FailCount:    0,
+		Fails:        []BatchFailItem{},
+	}
+
+	for _, userId := range req.UserIds {
+		var existing model.UserSubscription
+		if err := model.DB.Where("user_id = ? AND plan_id = ?", userId, req.PlanId).First(&existing).Error; err != nil {
+			result.Fails = append(result.Fails, BatchFailItem{UserId: userId, Reason: "订阅不存在"})
+			result.FailCount++
+			continue
+		}
+
+		_, delErr := model.AdminDeleteUserSubscription(existing.Id)
+		if delErr != nil {
+			result.Fails = append(result.Fails, BatchFailItem{UserId: userId, Reason: delErr.Error()})
+			result.FailCount++
+			continue
+		}
+		result.SuccessCount++
+	}
+
+	common.ApiSuccess(c, result)
+}
