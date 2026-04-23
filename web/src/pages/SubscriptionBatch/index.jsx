@@ -378,7 +378,7 @@ const SubscriptionBatch = () => {
                       <div className='text-red-500 text-xs'>
                         {results.fails.map((fail, idx) => (
                           <div key={idx} className='mb-1'>
-                            {t('用户')} {fail.userId}: {fail.message}
+                            {t('用户')} {fail.userId}: {fail.reason}
                           </div>
                         ))}
                       </div>

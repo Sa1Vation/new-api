@@ -384,20 +384,20 @@ func AdminDeleteUserSubscription(c *gin.Context) {
 
 // Batch operation request
 type BatchSubscriptionRequest struct {
-	UserIds []int `json:"user_ids"`
-	PlanId  int   `json:"plan_id"`
+	UserIds []int `json:"userIds"`
+	PlanId  int   `json:"planId"`
 }
 
 // Batch operation result
 type BatchSubscriptionResult struct {
 	Total        int             `json:"total"`
-	SuccessCount int             `json:"success_count"`
-	FailCount    int             `json:"fail_count"`
+	SuccessCount int             `json:"successCount"`
+	FailCount    int             `json:"failCount"`
 	Fails        []BatchFailItem `json:"fails"`
 }
 
 type BatchFailItem struct {
-	UserId int    `json:"user_id"`
+	UserId int    `json:"userId"`
 	Reason string `json:"reason"`
 }
 
